@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Owner Deck Generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #F8F6F1;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+
+    .logo-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 3px solid #098532;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-dot::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      background: #098532;
+      border-radius: 50%;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1D1D1D;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1D1D1D;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #666;
+      margin-bottom: 36px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 36px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .field {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1D1D1D;
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .label-hint {
+      font-weight: 400;
+      color: #999;
+      margin-left: 6px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid #E5E5E5;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #1D1D1D;
+      background: #FAFAFA;
+      transition: border-color 0.15s, background 0.15s;
+      outline: none;
+      font-family: inherit;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: #098532;
+      background: white;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.5;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px;
+      background: #098532;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      margin-top: 8px;
+      font-family: inherit;
+    }
+
+    .btn:hover { background: #077a2c; }
+    .btn:active { transform: scale(0.99); }
+    .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+    /* Loading state */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 48px 0 24px;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid #E5E5E5;
+      border-top-color: #098532;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 24px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1D1D1D;
+      margin-bottom: 8px;
+    }
+
+    .loading-steps {
+      list-style: none;
+      font-size: 13px;
+      color: #999;
+      line-height: 2;
+    }
+
+    .loading-steps li.active { color: #098532; font-weight: 500; }
+    .loading-steps li.done { color: #1D1D1D; }
+    .loading-steps li.done::before { content: '✓  '; }
+
+    /* Success state */
+    .success {
+      display: none;
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    .success-icon {
+      width: 56px;
+      height: 56px;
+      background: #098532;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 24px;
+      color: white;
+    }
+
+    .success h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1D1D1D;
+      margin-bottom: 8px;
+    }
+
+    .success p {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 28px;
+    }
+
+    .deck-link {
+      display: inline-block;
+      padding: 14px 32px;
+      background: #098532;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      transition: background 0.15s;
+      margin-bottom: 16px;
+    }
+
+    .deck-link:hover { background: #077a2c; }
+
+    .reset-btn {
+      display: block;
+      margin: 16px auto 0;
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: underline;
+    }
+
+    .reset-btn:hover { color: #666; }
+
+    /* Error */
+    .error-msg {
+      display: none;
+      background: #FFF2F2;
+      border: 1px solid #FFD0D0;
+      color: #CC3333;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 16px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #098532;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      margin-top: 4px;
+      border-top: 1px solid #E5E5E5;
+      padding-top: 20px;
+    }
+
+    @media (max-width: 480px) {
+      .row { grid-template-columns: 1fr; }
+      .card { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <span class="logo-text">Owner</span>
+    </div>
+
+    <h1>Sales Deck Generator</h1>
+    <p class="subtitle">Fill out the form and get a prospect-ready Google Slides deck in about 30 seconds.</p>
+
+    <div class="card">
+      <!-- Form -->
+      <div id="form-view">
+        <div class="field">
+          <label>Restaurant Name</label>
+          <input type="text" id="restaurantName" placeholder="e.g. Zollos Pizza" />
+        </div>
+
+        <div class="field">
+          <label>Restaurant Website <span class="label-hint">optional but recommended</span></label>
+          <input type="text" id="websiteUrl" placeholder="e.g. https://zollospizza.com" />
+        </div>
+
+        <div class="field">
+          <label>Your Name</label>
+          <input type="text" id="repName" placeholder="e.g. Dani Funes" />
+        </div>
+
+        <div class="field">
+          <label>Deal Notes <span class="label-hint">paste your notes as-is</span></label>
+          <textarea id="dealNotes" placeholder="Situation: Toast POS, 2 locations, heavy DoorDash dependency (~$250K/year in fees). Pain: wants to reduce commissions, no loyalty program. Critical event: spring break in 3 weeks..."></textarea>
+        </div>
+
+        <div class="section-label">Third-Party Delivery</div>
+
+        <div class="row">
+          <div class="field">
+            <label>Monthly 3PD Volume <span class="label-hint">in dollars</span></label>
+            <input type="text" id="thirdPartyVolume" placeholder="e.g. 25000" />
+          </div>
+          <div class="field">
+            <label>Commission Rate <span class="label-hint">%</span></label>
+            <input type="text" id="thirdPartyCommission" placeholder="e.g. 30" />
+          </div>
+        </div>
+
+        <button class="btn" id="generateBtn" onclick="generateDeck()">Generate Deck →</button>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading" id="loading-view">
+        <div class="spinner"></div>
+        <div class="loading-title">Building your deck...</div>
+        <ul class="loading-steps" id="loading-steps">
+          <li id="step-1">Researching the restaurant</li>
+          <li id="step-2">Writing prospect-specific content</li>
+          <li id="step-3">Building the Google Slides deck</li>
+          <li id="step-4">Saving to Drive</li>
+        </ul>
+      </div>
+
+      <!-- Success -->
+      <div class="success" id="success-view">
+        <div class="success-icon">✓</div>
+        <h2>Your deck is ready.</h2>
+        <p id="success-subtitle">Saved to the Owner Sales Decks folder in Drive.</p>
+        <a href="#" id="deckLink" target="_blank" class="deck-link">Open in Google Slides →</a>
+        <button class="reset-btn" onclick="resetForm()">Generate another deck</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let stepIndex = 0;
+    let stepInterval;
+
+    function animateSteps() {
+      const steps = ['step-1', 'step-2', 'step-3', 'step-4'];
+      const durations = [4000, 10000, 8000, 3000];
+      let i = 0;
+
+      function advance() {
+        if (i > 0) {
+          document.getElementById(steps[i-1]).className = 'done';
+        }
+        if (i < steps.length) {
+          document.getElementById(steps[i]).className = 'active';
+          stepInterval = setTimeout(() => { i++; advance(); }, durations[i]);
+        }
+      }
+      advance();
+    }
+
+    async function generateDeck() {
+      const restaurantName = document.getElementById('restaurantName').value.trim();
+      const websiteUrl = document.getElementById('websiteUrl').value.trim();
+      const repName = document.getElementById('repName').value.trim();
+      const dealNotes = document.getElementById('dealNotes').value.trim();
+      const thirdPartyVolume = document.getElementById('thirdPartyVolume').value.trim();
+      const thirdPartyCommission = document.getElementById('thirdPartyCommission').value.trim();
+
+      if (!restaurantName || !repName || !dealNotes) {
+        showError('Please fill in Restaurant Name, Your Name, and Deal Notes.');
+        return;
+      }
+
+      document.getElementById('errorMsg').style.display = 'none';
+      document.getElementById('form-view').style.display = 'none';
+      document.getElementById('loading-view').style.display = 'block';
+      animateSteps();
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restaurantName, websiteUrl, repName, dealNotes, thirdPartyVolume, thirdPartyCommission })
+        });
+
+        const data = await res.json();
+        clearTimeout(stepInterval);
+
+        if (data.error === 'NOT_AUTHORIZED') {
+          window.location.href = '/auth';
+          return;
+        }
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Something went wrong');
+        }
+
+        document.getElementById('loading-view').style.display = 'none';
+        document.getElementById('success-view').style.display = 'block';
+        document.getElementById('deckLink').href = data.url;
+        document.getElementById('success-subtitle').textContent =
+          `"${data.title}" is ready in the Owner Sales Decks folder.`;
+
+      } catch (err) {
+        clearTimeout(stepInterval);
+        document.getElementById('loading-view').style.display = 'none';
+        document.getElementById('form-view').style.display = 'block';
+        showError('Error: ' + err.message);
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function resetForm() {
+      document.getElementById('success-view').style.display = 'none';
+      document.getElementById('form-view').style.display = 'block';
+      document.getElementById('restaurantName').value = '';
+      document.getElementById('websiteUrl').value = '';
+      document.getElementById('dealNotes').value = '';
+      document.getElementById('thirdPartyVolume').value = '';
+      document.getElementById('thirdPartyCommission').value = '';
+      ['step-1','step-2','step-3','step-4'].forEach(id => {
+        document.getElementById(id).className = '';
+      });
+    }
+  </script>
+</body>
+</html>
